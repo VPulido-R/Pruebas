@@ -14,11 +14,11 @@ known_face_names = data["names"]
 
 # Initialize the camera
 picam2 = Picamera2()
-picam2.configure(picam2.create_preview_configuration(main={"format": 'XRGB8888', "size": (1920, 1080)}))
+picam2.configure(picam2.create_preview_configuration(main={"format": 'XRGB8888', "size": (480, 480)}))
 picam2.start()
 
 # Initialize our variables
-cv_scaler = 4 # this has to be a whole number
+cv_scaler = 1 # this has to be a whole number
 
 face_locations = []
 face_encodings = []
@@ -109,5 +109,6 @@ while True:
         break
 
 # By breaking the loop we run this code here which closes everything
+print("se ha cerrado el reconocimiento facial")
 cv2.destroyAllWindows()
 picam2.stop()
