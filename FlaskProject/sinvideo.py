@@ -16,12 +16,16 @@ def detection_loop():
     while True:
         frame, name = recognizer.process_frame()
         now = datetime.now()
+
         if name:
             latest_name = name
             last_detect_time = now
         else:
+            # Borrar nombre si hace más de CLEAR_DELAY segundos que no hay detección
             if last_detect_time and (now - last_detect_time).total_seconds() > CLEAR_DELAY:
                 latest_name = ""
+                last_detect_time = None
+
         time.sleep(0.1)
 
 threading.Thread(target=detection_loop, daemon=True).start()
