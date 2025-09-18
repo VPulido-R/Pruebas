@@ -6,8 +6,8 @@ import recognizer
 from datetime import datetime
 
 app = Flask(__name__)
-CLEAR_DELAY = 3
-PROCESS_INTERVAL = 0.5  # segundos entre detecciones
+CLEAR_DELAY = 3          # segundos para borrar nombre si no hay detección
+PROCESS_INTERVAL = 0.5   # segundos entre detecciones
 
 latest_name = ""
 last_detect_time = None
@@ -15,8 +15,8 @@ last_process_time = 0
 
 # -------------------- CAPTURA DE CÁMARA --------------------
 cap = cv2.VideoCapture(0)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 def detection_loop():
     global latest_name, last_detect_time, last_process_time
@@ -29,8 +29,8 @@ def detection_loop():
             if not ret:
                 continue
 
-            # Pasamos el frame al recognizer
-            name = recognizer.process_frame(frame)[1]  # asumimos que devuelve (frame, name)
+            # Pasamos el frame completo al recognizer
+            name = recognizer.process_frame(frame)[1]  # (frame, name)
             
             if name:
                 latest_name = name
@@ -67,7 +67,7 @@ def index():
               h1.textContent = data.nombre || 'Esperando detección...';
             });
         }
-        setInterval(actualizar, 500);
+        setInterval(actualizar, 500); // refresco cada 0.5s
       </script>
     </body>
     </html>
