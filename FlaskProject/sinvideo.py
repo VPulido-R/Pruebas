@@ -1,63 +1,27 @@
 from flask import Flask, jsonify, render_template_string
-import sqlite3
-from datetime import datetime, timedelta
 import threading
 import time
 import recognizer
-
-DB = "database.db"
-COOLDOWN_HOURS = 24
-CLEAR_DELAY = 3  # segundos para borrar nombre si no hay detección
+from datetime import datetime
 
 app = Flask(__name__)
+CLEAR_DELAY = 3  # segundos para borrar nombre si no hay detección
 
-# -------------------- BASE DE DATOS --------------------
-def ensure_db():
-    conn = sqlite3.connect(DB)
-    c = conn.cursor()
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS detections(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        timestamp TEXT
-    )""")
-    conn.commit()
-    conn.close()
-ensure_db()
-
-last_seen = {}
-latest_names = []  # nombres detectados recientemente
-last_detect_time = None  # timestamp de última detección
-
-def log_detection(name):
-    if not name:
-        return
-    now = datetime.now()
-    if name in last_seen and now - last_seen[name] < timedelta(hours=COOLDOWN_HOURS):
-        return
-    last_seen[name] = now
-    conn = sqlite3.connect(DB)
-    c = conn.cursor()
-    c.execute("INSERT INTO detections(name, timestamp) VALUES(?,?)",
-              (name, now.strftime("%Y-%m-%d %H:%M:%S")))
-    conn.commit()
-    conn.close()
-    print(f"[LOG] {name} registrado a las {now}")
+latest_name = ""
+last_detect_time = None
 
 # -------------------- DETECCIÓN EN BACKGROUND --------------------
 def detection_loop():
-    global latest_names, last_detect_time
+    global latest_name, last_detect_time
     while True:
         frame, name = recognizer.process_frame()
         now = datetime.now()
         if name:
-            log_detection(name)
-            latest_names = [name]
+            latest_name = name
             last_detect_time = now
         else:
-            # Si pasaron más de CLEAR_DELAY segundos desde la última detección, borrar nombre
             if last_detect_time and (now - last_detect_time).total_seconds() > CLEAR_DELAY:
-                latest_names = []
+                latest_name = ""
         time.sleep(0.1)
 
 threading.Thread(target=detection_loop, daemon=True).start()
@@ -68,10 +32,10 @@ def index():
     html = """
     <html>
     <head>
-      <title>Asistencia Facial</title>
+      <title>Reconocimiento Facial</title>
       <style>
         body { font-family: Arial; text-align: center; margin-top: 50px; }
-        h1 { font-size: 60px; color: #333; }
+        h1 { font-size: 80px; color: #333; }
       </style>
     </head>
     <body>
@@ -86,7 +50,7 @@ def index():
               h1.textContent = data.nombre || 'Esperando detección...';
             });
         }
-        setInterval(actualizar, 1000);
+        setInterval(actualizar, 500); // refresco cada 0.5s
       </script>
     </body>
     </html>
@@ -95,7 +59,7 @@ def index():
 
 @app.route("/nombre")
 def nombre():
-    return jsonify({"nombre": latest_names[0] if latest_names else ""})
+    return jsonify({"nombre": latest_name})
 
 # -------------------- CIERRE --------------------
 import atexit
