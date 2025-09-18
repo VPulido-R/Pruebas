@@ -9,7 +9,7 @@ DB = "database.db"
 
 app = Flask(__name__)
 
-# Crea tabla si no existe
+# -------------------- BASE DE DATOS --------------------
 def ensure_db():
     conn = sqlite3.connect(DB)
     c = conn.cursor()
@@ -33,9 +33,9 @@ def log_detection(name):
     conn.commit()
     conn.close()
 
+# -------------------- PÁGINAS WEB --------------------
 @app.route("/")
 def index():
-    # HTML mínimo inline para no depender de templates
     html = """
     <h1>Asistencia - Video en vivo</h1>
     <img src="/video" width="640" height="480" />
@@ -43,11 +43,16 @@ def index():
     """
     return render_template_string(html)
 
+# -------------------- STREAM DE VIDEO --------------------
 def gen_frames():
     while True:
         frame, name = recognizer.process_frame()
         if name:  # se guarda UNA vez por persona cada 60s
             log_detection(name)
+
+        # 🔹 Corregir colores: OpenCV usa BGR, navegador espera RGB
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
         ok, buf = cv2.imencode(".jpg", frame)
         if not ok:
             continue
@@ -69,9 +74,10 @@ def registros():
     items = "".join(f"<li>{ts} - {name}</li>" for name, ts in rows)
     return f"<h1>Registros</h1><ul>{items}</ul>"
 
-# cerrar cámara al salir
+# -------------------- CIERRE --------------------
 atexit.register(recognizer.shutdown)
 
+# -------------------- MAIN --------------------
 if __name__ == "__main__":
     # IMPORTANTE: desactivar reloader para que NO abra la cámara dos veces
     app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False, threaded=True)
