@@ -6,6 +6,9 @@ import atexit
 import recognizer
 
 DB = "database.db"
+FRAME_WIDTH = 640
+FRAME_HEIGHT = 480
+JPEG_QUALITY = 80  # 0-100, ajustar si quieres más rápido
 
 app = Flask(__name__)
 
@@ -32,7 +35,6 @@ def log_detection(name):
               (name, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
     conn.commit()
     conn.close()
-    print(f"[LOG] {name} registrado a las {datetime.now()}")
 
 # -------------------- PÁGINAS WEB --------------------
 @app.route("/")
@@ -55,27 +57,27 @@ def registros():
     return f"<h1>Registros</h1><ul>{items}</ul>"
 
 # -------------------- STREAM DE VIDEO --------------------
+cap = cv2.VideoCapture(0)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
+
 def gen_frames():
     while True:
-        # Obtener frame y nombre detectado
-        frame, name = recognizer.process_frame()
+        ret, frame = cap.read()
+        if not ret:
+            continue
 
-        # Redimensionar para streaming web rápido
-        frame = cv2.resize(frame, (320, 240))
-
-        # Registrar detección si hay nombre
+        # Procesamiento de reconocimiento facial
+        frame, name = recognizer.process_frame(frame)
         if name:
             log_detection(name)
 
-        # Corregir color (BGR → RGB)
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-        # Comprimir JPG para web (calidad 60)
-        ok, buf = cv2.imencode(".jpg", frame, [int(cv2.IMWRITE_JPEG_QUALITY), 60])
+        # Codificar frame como JPEG con calidad ajustable
+        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), JPEG_QUALITY]
+        ok, buf = cv2.imencode(".jpg", frame, encode_param)
         if not ok:
             continue
 
-        # Enviar frame al navegador
         yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" +
                buf.tobytes() + b"\r\n")
 
@@ -85,9 +87,8 @@ def video():
                     mimetype="multipart/x-mixed-replace; boundary=frame")
 
 # -------------------- CIERRE --------------------
-atexit.register(recognizer.shutdown)
+atexit.register(lambda: (cap.release(), recognizer.shutdown()))
 
 # -------------------- MAIN --------------------
 if __name__ == "__main__":
-    # IMPORTANTE: desactivar reloader para que NO abra la cámara dos veces
     app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False, threaded=True)
