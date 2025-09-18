@@ -6,40 +6,34 @@ import recognizer
 from datetime import datetime
 
 app = Flask(__name__)
-CLEAR_DELAY = 3          # segundos para borrar nombre si no hay detección
-PROCESS_INTERVAL = 0.5   # segundos entre detecciones
+CLEAR_DELAY = 3  # segundos para borrar nombre si no hay detección
 
 latest_name = ""
 last_detect_time = None
-last_process_time = 0
 
-# -------------------- CAPTURA DE CÁMARA --------------------
-cap = cv2.VideoCapture(0)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+# -------------------- CAPTURA Y DETECCIÓN EN BACKGROUND --------------------
+cap = cv2.VideoCapture(0)  # cámara predeterminada
 
 def detection_loop():
-    global latest_name, last_detect_time, last_process_time
+    global latest_name, last_detect_time
     while True:
-        now = time.time()
-        if now - last_process_time >= PROCESS_INTERVAL:
-            last_process_time = now
+        ret, frame = cap.read()
+        if not ret:
+            continue
 
-            ret, frame = cap.read()
-            if not ret:
-                continue
+        # Llamamos al recognizer con el frame completo
+        name = recognizer.process_frame(frame)[1]  # (frame, name)
 
-            # Pasamos el frame completo al recognizer
-            name = recognizer.process_frame(frame)[1]  # (frame, name)
-            
-            if name:
-                latest_name = name
-                last_detect_time = datetime.now()
-            else:
-                if last_detect_time and (datetime.now() - last_detect_time).total_seconds() > CLEAR_DELAY:
-                    latest_name = ""
-                    last_detect_time = None
-        time.sleep(0.05)
+        if name:
+            latest_name = name
+            last_detect_time = datetime.now()
+        else:
+            if last_detect_time and (datetime.now() - last_detect_time).total_seconds() > CLEAR_DELAY:
+                latest_name = ""
+                last_detect_time = None
+
+        # Pequeño sleep para no saturar al hilo (puede eliminarse si quieres máximo consumo)
+        time.sleep(0.01)
 
 threading.Thread(target=detection_loop, daemon=True).start()
 
