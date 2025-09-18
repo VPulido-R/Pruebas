@@ -5,28 +5,32 @@ import recognizer
 from datetime import datetime
 
 app = Flask(__name__)
-CLEAR_DELAY = 3  # segundos para borrar nombre si no hay detección
+CLEAR_DELAY = 3       # segundos para borrar nombre si no hay detección
+PROCESS_INTERVAL = 0.5  # segundos entre detecciones
 
 latest_name = ""
 last_detect_time = None
+last_process_time = 0
 
 # -------------------- DETECCIÓN EN BACKGROUND --------------------
 def detection_loop():
-    global latest_name, last_detect_time
+    global latest_name, last_detect_time, last_process_time
     while True:
-        frame, name = recognizer.process_frame()
-        now = datetime.now()
+        now = time.time()
+        if now - last_process_time >= PROCESS_INTERVAL:
+            last_process_time = now
 
-        if name:
-            latest_name = name
-            last_detect_time = now
-        else:
-            # Borrar nombre si hace más de CLEAR_DELAY segundos que no hay detección
-            if last_detect_time and (now - last_detect_time).total_seconds() > CLEAR_DELAY:
-                latest_name = ""
-                last_detect_time = None
-
-        time.sleep(0.1)
+            # Tomar frame y reducir resolución para acelerar detección
+            frame, name = recognizer.process_frame()
+            
+            if name:
+                latest_name = name
+                last_detect_time = datetime.now()
+            else:
+                if last_detect_time and (datetime.now() - last_detect_time).total_seconds() > CLEAR_DELAY:
+                    latest_name = ""
+                    last_detect_time = None
+        time.sleep(0.05)  # pequeño sleep para no saturar CPU
 
 threading.Thread(target=detection_loop, daemon=True).start()
 
