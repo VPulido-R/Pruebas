@@ -7,6 +7,7 @@ import recognizer
 
 DB = "database.db"
 COOLDOWN_HOURS = 24
+CLEAR_DELAY = 3  # segundos para borrar nombre si no hay detección
 
 app = Flask(__name__)
 
@@ -24,8 +25,9 @@ def ensure_db():
     conn.close()
 ensure_db()
 
-# Última vez que se detectó cada persona
 last_seen = {}
+latest_names = []  # nombres detectados recientemente
+last_detect_time = None  # timestamp de última detección
 
 def log_detection(name):
     if not name:
@@ -43,18 +45,21 @@ def log_detection(name):
     print(f"[LOG] {name} registrado a las {now}")
 
 # -------------------- DETECCIÓN EN BACKGROUND --------------------
-latest_names = []  # nombres detectados recientemente
-
 def detection_loop():
-    global latest_names
+    global latest_names, last_detect_time
     while True:
         frame, name = recognizer.process_frame()
+        now = datetime.now()
         if name:
             log_detection(name)
-            latest_names = [name]  # mostramos solo el último detectado
-        time.sleep(0.1)  # pequeño delay para no saturar CPU
+            latest_names = [name]
+            last_detect_time = now
+        else:
+            # Si pasaron más de CLEAR_DELAY segundos desde la última detección, borrar nombre
+            if last_detect_time and (now - last_detect_time).total_seconds() > CLEAR_DELAY:
+                latest_names = []
+        time.sleep(0.1)
 
-# Iniciar hilo de detección
 threading.Thread(target=detection_loop, daemon=True).start()
 
 # -------------------- PÁGINA WEB --------------------
@@ -81,7 +86,7 @@ def index():
               h1.textContent = data.nombre || 'Esperando detección...';
             });
         }
-        setInterval(actualizar, 1000); // cada 1 segundo
+        setInterval(actualizar, 1000);
       </script>
     </body>
     </html>
