@@ -18,7 +18,7 @@ picam2.configure(picam2.create_preview_configuration(main={"format": 'XRGB8888',
 picam2.start()
 
 # Initialize our variables
-cv_scaler = 8 # this has to be a whole number
+cv_scaler = 5 # this has to be a whole number
 
 face_locations = []
 face_encodings = []
@@ -44,7 +44,7 @@ def process_frame(frame):
     for face_encoding in face_encodings:
         # See if the face is a match for the known face(s)
         matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
-        name = "Unknown"
+        name = "Desconocido"
         
         # Use the known face with the smallest distance to the new face
         face_distances = face_recognition.face_distance(known_face_encodings, face_encoding)
@@ -98,8 +98,8 @@ while True:
     current_fps = calculate_fps()
     
     # Attach FPS counter to the text and boxes
-    cv2.putText(display_frame, f"FPS: {current_fps:.1f}", (display_frame.shape[1] - 150, 30), 
-                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+    #cv2.putText(display_frame, f"FPS: {current_fps:.1f}", (display_frame.shape[1] - 150, 30), 
+    #           cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     
     # Display everything over the video feed.
     cv2.imshow('Video', display_frame)

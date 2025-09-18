@@ -10,3 +10,4 @@ for row in rows:
     print(row)
 
 conn.close()
+print("todos los datos han sido mostrados")
