@@ -85,6 +85,7 @@ def gen_frames():
         frame, name = recognizer.process_frame()
         if name:  # se guarda UNA vez por persona cada 60s
             log_detection(name)
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         ok, buf = cv2.imencode(".jpg", frame)
         if not ok:
             continue
