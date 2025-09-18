@@ -1,18 +1,23 @@
 from flask import Flask, jsonify, render_template_string
 import threading
 import time
+import cv2
 import recognizer
 from datetime import datetime
 
 app = Flask(__name__)
-CLEAR_DELAY = 3       # segundos para borrar nombre si no hay detección
+CLEAR_DELAY = 3
 PROCESS_INTERVAL = 0.5  # segundos entre detecciones
 
 latest_name = ""
 last_detect_time = None
 last_process_time = 0
 
-# -------------------- DETECCIÓN EN BACKGROUND --------------------
+# -------------------- CAPTURA DE CÁMARA --------------------
+cap = cv2.VideoCapture(0)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
+
 def detection_loop():
     global latest_name, last_detect_time, last_process_time
     while True:
@@ -20,8 +25,12 @@ def detection_loop():
         if now - last_process_time >= PROCESS_INTERVAL:
             last_process_time = now
 
-            # Tomar frame y reducir resolución para acelerar detección
-            frame, name = recognizer.process_frame()
+            ret, frame = cap.read()
+            if not ret:
+                continue
+
+            # Pasamos el frame al recognizer
+            name = recognizer.process_frame(frame)[1]  # asumimos que devuelve (frame, name)
             
             if name:
                 latest_name = name
@@ -30,7 +39,7 @@ def detection_loop():
                 if last_detect_time and (datetime.now() - last_detect_time).total_seconds() > CLEAR_DELAY:
                     latest_name = ""
                     last_detect_time = None
-        time.sleep(0.05)  # pequeño sleep para no saturar CPU
+        time.sleep(0.05)
 
 threading.Thread(target=detection_loop, daemon=True).start()
 
@@ -58,7 +67,7 @@ def index():
               h1.textContent = data.nombre || 'Esperando detección...';
             });
         }
-        setInterval(actualizar, 500); // refresco cada 0.5s
+        setInterval(actualizar, 500);
       </script>
     </body>
     </html>
@@ -71,7 +80,10 @@ def nombre():
 
 # -------------------- CIERRE --------------------
 import atexit
-atexit.register(recognizer.shutdown)
+def shutdown():
+    cap.release()
+    recognizer.shutdown()
+atexit.register(shutdown)
 
 # -------------------- MAIN --------------------
 if __name__ == "__main__":
