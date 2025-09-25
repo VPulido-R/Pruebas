@@ -30,6 +30,7 @@ face_encodings = []
 face_names = []
 
 # -------------------- FUNCIONES --------------------
+#----------------------DETECCION DE ROSTROS------------------
 def process_frame(frame):
     global face_locations, face_encodings, face_names
     resized_frame = cv2.resize(frame, (0, 0), fx=(1/cv_scaler), fy=(1/cv_scaler))
@@ -49,10 +50,10 @@ def process_frame(frame):
         face_names.append(name)
     
     return frame
-
+#-------------------MUESTRA NOMBRE, FECHA Y HORA----------------------
 def detection_loop():
     global latest_name, latest_time
-    clear_delay = 3  # segundos para borrar el nombre si no hay detección
+    clear_delay = 0.5  # segundos para borrar el nombre si no hay detección
     last_detect_time = None
     
     while True:

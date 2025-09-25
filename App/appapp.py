@@ -20,7 +20,7 @@ picam2 = Picamera2()
 picam2.configure(picam2.create_preview_configuration(main={"format": 'XRGB8888', "size": (340, 580)}))
 picam2.start()
 
-cv_scaler = 5  # escala para procesar menos pixels y aumentar velocidad
+cv_scaler = 2  # escala para procesar menos pixels y aumentar velocidad
 
 # -------------------- VARIABLES --------------------
 latest_name = "Esperando detección..."
@@ -51,7 +51,7 @@ def process_frame(frame):
 
 def detection_loop():
     global latest_name
-    clear_delay = 3  # segundos para borrar el nombre si no hay detección
+    clear_delay = 0.5  # segundos para borrar el nombre si no hay detección
     last_detect_time = None
     
     while True:
@@ -73,10 +73,10 @@ def update_label():
 # -------------------- TKINTER UI --------------------
 root = tk.Tk()
 root.title("Reconocimiento Facial")
-root.geometry("800x400")
+root.geometry("600x200")
 root.resizable(False, False)
 
-label = tk.Label(root, text=latest_name, font=("Arial", 64))
+label = tk.Label(root, text=latest_name, font=("Arial", 54))
 label.pack(expand=True)
 
 # -------------------- HILOS --------------------
