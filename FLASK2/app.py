@@ -11,7 +11,7 @@ from picamera2 import Picamera2
 import pickle
 
 # -------------------- CONFIG --------------------
-SERVER_URL = "http://TU_IP_LOCAL:5000/registro"  # reemplaza TU_IP_LOCAL con la IP de tu PC/servidor local
+SERVER_URL = "http://192.168.0.164:5000/registro"  # reemplaza TU_IP_LOCAL con la IP de tu PC/servidor local
 cv_scaler = 5  # reducir resolución para acelerar
 clear_delay = 0.5  # tiempo para borrar nombre si no hay detección
 
