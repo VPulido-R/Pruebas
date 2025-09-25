@@ -12,7 +12,7 @@ import pickle
 from PIL import Image, ImageTk   # <-- para manejar imágenes
 
 # -------------------- CONFIG --------------------
-SERVER_URL = "http://192.168.0.164:5000/registro"
+SERVER_URL = "http://192.168.0.247:4000/registro"
 cv_scaler = 5
 clear_delay = 0.5
 
