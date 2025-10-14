@@ -11,17 +11,18 @@ from picamera2 import Picamera2
 import pickle
 from PIL import Image, ImageTk   # <-- para manejar imágenes
 
-# -------------------- CONFIG --------------------
-SERVER_URL = "http://192.168.0.247:4000/registro"
-cv_scaler = 5
-clear_delay = 0.5
+# -------------------- CONFIG
+#SERVIDOR PARA ENVIAR LOSREGISTRROS
+SERVER_URL = "http://192.168.0.237:4000/registro"
+cv_scaler = 5  #factor de reduccion para el procesamiento
+clear_delay = 0.5  #delay para limpiar el reconomiento facial
 
-# -------------------- CARGAR ENCODES --------------------
-print("[INFO] Cargando encodings...")
+# -------------------- CARGAR EL RECONOCIMIENTO DE NUESTRO ARCHIVO PICKLE --------------------
+print("[INFO] Cargando encodings...") 
 with open("encodings.pickle", "rb") as f:
     data = pickle.loads(f.read())
-known_face_encodings = data["encodings"]
-known_face_names = data["names"]
+known_face_encodings = data["encodings"] 	#CARACTERISTICAS
+known_face_names = data["names"]	#NOMBRES
 
 # -------------------- INICIALIZAR CÁMARA --------------------
 picam2 = Picamera2()
@@ -34,6 +35,7 @@ latest_time = ""
 face_names = []
 
 # -------------------- FUNCIONES --------------------
+#procesamiento de video
 def process_frame(frame):
     global face_names
     resized_frame = cv2.resize(frame, (0, 0), fx=(1/cv_scaler), fy=(1/cv_scaler))
@@ -52,12 +54,14 @@ def process_frame(frame):
             name = known_face_names[best_idx]
         face_names.append(name)
     return frame
-
+#envio de datos al servudir:)
 def send_log(name, timestamp):
     try:
         requests.post(SERVER_URL, json={"name": name, "timestamp": timestamp}, timeout=2)
     except Exception as e:
         print("Error enviando log:", e)
+        
+#BUCLE PRINCIPAL DE DETECCION
 
 def detection_loop():
     global latest_name, latest_time
@@ -102,22 +106,22 @@ main_frame = tk.Frame(root)
 main_frame.pack(expand=True, fill="both")
 
 # -------- LADO IZQUIERDO (IMAGEN FIJA) --------
-image_label = tk.Label(main_frame, width=800, height=500, bg="black")
-image_label.pack(side="left", padx=10, pady=10)
+image_label = tk.Label(main_frame, width=1300, height=1000, bg="black")
+image_label.pack(side="left", padx=5, pady=5)
 
 # cargar ejemplo.jpg
 img = Image.open("ejemplo.jpg")
-img = img.resize((800, 500))  # redimensionar
+img = img.resize((1300, 1000))  # redimensionar
 imgtk = ImageTk.PhotoImage(img)
 image_label.imgtk = imgtk
 image_label.config(image=imgtk)
 
 # -------- LADO DERECHO (INFO) --------
 right_frame = tk.Frame(main_frame)
-right_frame.pack(side="right", fill="y", padx=10, pady=10)
+right_frame.pack(side="right", fill="y", padx=5, pady=5)
 
 label = tk.Label(right_frame, text=latest_name, font=("Arial", 32))
-label.pack(pady=10)
+label.pack(pady=5)
 
 time_label = tk.Label(right_frame, text=latest_time, font=("Arial", 20))
 time_label.pack(pady=5)
