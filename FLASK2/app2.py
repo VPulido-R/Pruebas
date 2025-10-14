@@ -9,7 +9,8 @@ import cv2
 import numpy as np
 from picamera2 import Picamera2
 import pickle
-from PIL import Image, ImageTk   # <-- para manejar imágenes
+from PIL import Image, ImageTk# <-- para manejar imágenes
+from tkinter import messagebox
 
 # -------------------- CONFIG
 #SERVIDOR PARA ENVIAR LOSREGISTRROS
@@ -69,16 +70,24 @@ def detection_loop():
     while True:
         frame = picam2.capture_array()
         _ = process_frame(frame)
+        
+        detected_time=datetime.now()
+        time_str=detected_time.strftime("%Y-%m-%d %H:%M:%S")
 
         if face_names:
-            detected_name = ", ".join(face_names)
-            detected_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            detected_name = ", ".join(face_names)           
             
             latest_name = detected_name
-            latest_time = detected_time
-            last_detect_time = datetime.now()
+            latest_time = time_str
+            last_detect_time = detected_time
             
             root.after(0, lambda n=detected_name, t=detected_time: add_to_table(n, t))
+            
+            if detected_time.hour>=9:
+                root.after(0,lambda: messagebox.showwarning(
+                    "Entrada tarde",
+                    f"Hola {detected_name}, son las {detected_time.strftime('%H:%M')}!"))
+                        
             threading.Thread(target=lambda: send_log(detected_name, detected_time), daemon=True).start()
         else:
             if last_detect_time and (datetime.now() - last_detect_time).total_seconds() > clear_delay:
