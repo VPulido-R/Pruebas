@@ -132,7 +132,7 @@ frame_table.pack(expand=True, fill="both", pady=10)
 table = ttk.Treeview(frame_table, columns=("Nombre", "Fecha/Hora"), show="headings", height=8)
 table.heading("Nombre", text="Nombre")
 table.heading("Fecha/Hora", text="Fecha y Hora")
-table.column("Nombre", anchor="center", width=200)
+table.column("Nombre", anchor="center", width=100)
 table.column("Fecha/Hora", anchor="center", width=300)
 table.pack(expand=True, fill="both")
 
