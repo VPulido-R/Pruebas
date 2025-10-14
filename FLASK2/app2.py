@@ -55,7 +55,7 @@ def process_frame(frame):
             name = known_face_names[best_idx]
         face_names.append(name)
     return frame
-#envio de datos al servudir:)
+#envio de datos al servidor:)
 def send_log(name, timestamp):
     try:
         requests.post(SERVER_URL, json={"name": name, "timestamp": timestamp}, timeout=2)
@@ -81,14 +81,16 @@ def detection_loop():
             latest_time = time_str
             last_detect_time = detected_time
             
-            root.after(0, lambda n=detected_name, t=detected_time: add_to_table(n, t))
+            root.after(0, lambda n=detected_name, t=time_str: add_to_table(n, t))
+            
+            
             
             if detected_time.hour>=9:
                 root.after(0,lambda: messagebox.showwarning(
                     "Entrada tarde",
                     f"Hola {detected_name}, son las {detected_time.strftime('%H:%M')}!"))
                         
-            threading.Thread(target=lambda: send_log(detected_name, detected_time), daemon=True).start()
+            threading.Thread(target=lambda: send_log(detected_name, time_str), daemon=True).start()
         else:
             if last_detect_time and (datetime.now() - last_detect_time).total_seconds() > clear_delay:
                 latest_name = "Esperando detección..."
