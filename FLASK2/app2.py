@@ -61,7 +61,7 @@ def send_log(name, timestamp):
     except Exception as e:
         print("Error enviando log:", e)
         
-#BUCLE PRINCIPAL DE DETECCION
+#BUCLE PRINCIPAL DE DETECCION aaaaaa
 
 def detection_loop():
     global latest_name, latest_time
